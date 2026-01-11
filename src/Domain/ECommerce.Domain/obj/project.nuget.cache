@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "CsgDFtGgzlsO+QkWF3PvtEgLyEbz5hjZeABKxW8da0al3OTL9Z0wtbmNmNovC4fpPWPUN4TQcTiJPQ4yfJLzsA==",
+  "success": true,
+  "projectFilePath": "D:\\ECommerce_Demo\\src\\Domain\\ECommerce.Domain\\ECommerce.Domain.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Bacancy\\.nuget\\packages\\system.componentmodel.annotations\\5.0.0\\system.componentmodel.annotations.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

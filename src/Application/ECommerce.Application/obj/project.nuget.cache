@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "FQ/KjnDdSyDSan+FC1mvXU7N2re7QF8W/u2yP0seS6NjKQrku8USI5inIJDDakBMkDC1HJtY5ItxPlQ9xC/YKw==",
+  "success": true,
+  "projectFilePath": "D:\\ECommerce_Demo\\src\\Application\\ECommerce.Application\\ECommerce.Application.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Bacancy\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
+    "C:\\Users\\Bacancy\\.nuget\\packages\\fluentvalidation.dependencyinjectionextensions\\12.1.1\\fluentvalidation.dependencyinjectionextensions.12.1.1.nupkg.sha512",
+    "C:\\Users\\Bacancy\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\2.1.0\\microsoft.extensions.dependencyinjection.abstractions.2.1.0.nupkg.sha512",
+    "C:\\Users\\Bacancy\\.nuget\\packages\\system.componentmodel.annotations\\5.0.0\\system.componentmodel.annotations.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
