@@ -33,6 +33,12 @@ builder.Services.AddControllers(options =>
 {
     // Add model validation filter
     options.Filters.Add<ModelValidationFilter>();
+})
+.AddJsonOptions(options =>
+{
+    // Ensure consistent camelCase JSON serialization
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.WriteIndented = false;
 });
 
 // Configure DbContext
@@ -117,15 +123,31 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add CORS
+// Configure CORS
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
+    ?? new[] { "http://localhost:3000" }; // Default fallback
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("ReactClient", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials(); // Required for JWT tokens in Authorization header
     });
+
+    // For development/testing, you can use a more permissive policy (not recommended for production)
+    if (builder.Environment.IsDevelopment())
+    {
+        options.AddPolicy("Development", policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+            // Note: AllowAnyOrigin() cannot be used with AllowCredentials()
+        });
+    }
 });
 
     var app = builder.Build();
@@ -137,9 +159,10 @@ builder.Services.AddCors(options =>
         app.UseSwaggerUI();
     }
 
-    app.UseHttpsRedirection();
+    // CORS must be called before UseAuthentication and UseAuthorization
+    app.UseCors("ReactClient");
 
-    app.UseCors("AllowAll");
+    app.UseHttpsRedirection();
 
     // Add global exception handler middleware (must be before UseAuthentication)
     app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
