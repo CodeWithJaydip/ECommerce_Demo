@@ -27,7 +27,7 @@ public class RoleRepository : IRoleRepository
     {
         role.CreatedAt = DateTime.UtcNow;
         await _context.Roles.AddAsync(role, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
+        // No SaveChangesAsync here - handled by UnitOfWork
         return role;
     }
 

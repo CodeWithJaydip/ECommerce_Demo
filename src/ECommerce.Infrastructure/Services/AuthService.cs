@@ -14,17 +14,20 @@ public class AuthService : IAuthService
     private readonly IRoleRepository _roleRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly IUnitOfWork _unitOfWork;
 
     public AuthService(
         IUserRepository userRepository,
         IRoleRepository roleRepository,
         IPasswordHasher passwordHasher,
-        IJwtTokenService jwtTokenService)
+        IJwtTokenService jwtTokenService,
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _roleRepository = roleRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -38,7 +41,7 @@ public class AuthService : IAuthService
         // Hash password
         var passwordHash = _passwordHasher.HashPassword(request.Password);
 
-        // Create user
+        // Create user (tracked but not saved yet)
         var user = new User
         {
             FirstName = request.FirstName,
@@ -49,11 +52,9 @@ public class AuthService : IAuthService
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
-
-        // Save user first to get the ID
         user = await _userRepository.CreateAsync(user, cancellationToken);
 
-        // Get Customer role or create it
+        // Get Customer role or create it (tracked but not saved yet)
         var customerRole = await _roleRepository.GetByNameAsync(nameof(ECommerce.Domain.Enums.UserRole.Customer), cancellationToken);
         if (customerRole == null)
         {
@@ -67,7 +68,20 @@ public class AuthService : IAuthService
         }
 
         // Assign Customer role to user
+        // Note: user.Id and customerRole.Id are still 0 here, but EF Core will resolve them on SaveChanges
+        // using the tracked entities and navigation properties
         await _userRepository.AddUserRoleAsync(user.Id, customerRole.Id, cancellationToken);
+
+        // Save all changes in a single transaction
+        // EF Core will resolve UserId and RoleId from navigation properties
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Refresh user to get the populated ID and roles after SaveChanges
+        user = await _userRepository.GetByIdAsync(user.Id, cancellationToken);
+        if (user == null)
+        {
+            throw new InvalidOperationException("Failed to create user");
+        }
 
         // Get user roles
         var roles = await _userRepository.GetUserRolesAsync(user.Id, cancellationToken);
@@ -119,6 +133,8 @@ public class AuthService : IAuthService
                 user.LockedUntil = DateTime.UtcNow.AddMinutes(30); // Lock for 30 minutes
             }
             await _userRepository.UpdateAsync(user, cancellationToken);
+            // Save changes for failed login attempt
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             throw new UnauthorizedAccessException("Invalid email or password");
         }
 
@@ -127,6 +143,9 @@ public class AuthService : IAuthService
         user.LockedUntil = null;
         user.LastLoginAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user, cancellationToken);
+        
+        // Save all changes in a single transaction
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Get user roles
         var roles = await _userRepository.GetUserRolesAsync(user.Id, cancellationToken);
