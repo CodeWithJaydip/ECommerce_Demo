@@ -6,6 +6,7 @@ using Serilog;
 using System.Text;
 using ECommerce.Api.Middleware;
 using ECommerce.Application.Features.Auth.Interfaces;
+using ECommerce.Application.Features.Category.Interfaces;
 using ECommerce.Infrastructure.Data;
 using ECommerce.Infrastructure.Repositories;
 using ECommerce.Infrastructure.Services;
@@ -42,6 +43,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 // Register UnitOfWork
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -50,6 +52,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
