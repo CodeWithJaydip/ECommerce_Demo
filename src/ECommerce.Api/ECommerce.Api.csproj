@@ -25,15 +25,4 @@
     <ProjectReference Include="..\ECommerce.Infrastructure\ECommerce.Infrastructure.csproj" />
   </ItemGroup>
 
-  <!-- Start React frontend automatically when running in Development -->
-  <Target Name="StartReactFrontend" BeforeTargets="Run" Condition="'$(Configuration)' == 'Debug'">
-    <PropertyGroup>
-      <ClientPath Condition="'$(ClientPath)' == ''">$(MSBuildThisFileDirectory)..\..\client</ClientPath>
-    </PropertyGroup>
-    <Message Text="Starting React Frontend Development Server from $(ClientPath)..." Importance="high" />
-    <Exec Command="powershell -NoProfile -Command &quot;Set-Location '$(ClientPath)'; if (Test-Path 'node_modules') { Start-Process powershell -ArgumentList '-NoExit', '-NoProfile', '-Command', &quot;&quot;Set-Location '$(ClientPath)'; npm run dev&quot;&quot; } else { Start-Process powershell -ArgumentList '-NoExit', '-NoProfile', '-Command', &quot;&quot;Set-Location '$(ClientPath)'; Write-Host 'Installing npm packages...'; npm install; npm run dev&quot;&quot; }&quot;" 
-          ContinueOnError="true" 
-          IgnoreExitCode="true" />
-  </Target>
-
 </Project>

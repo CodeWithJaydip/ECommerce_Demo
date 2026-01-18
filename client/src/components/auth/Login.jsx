@@ -1,19 +1,48 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { loginUser, clearError } from '../../store/slices/authSlice';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Form, FormItem, FormLabel, FormControl, FormMessage } from '../ui/form';
+
+// Validation schema using Zod
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Please enter a valid email address'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(6, 'Password must be at least 6 characters'),
+});
 
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
   });
 
-  const [validationErrors, setValidationErrors] = useState({});
+  // Watch email field to clear Redux error when user types
+  const emailValue = watch('email');
+  const passwordValue = watch('password');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -21,60 +50,17 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Don't auto-clear error when typing - let user see the error
+
   useEffect(() => {
-    // Clear error when component unmounts
     return () => {
       dispatch(clearError());
     };
   }, [dispatch]);
 
-  const validateForm = () => {
-    const errors = {};
-
-    if (!formData.email) {
-      errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    if (!formData.password) {
-      errors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear validation error for this field
-    if (validationErrors[name]) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
-    }
-    // Clear Redux error when user starts typing
-    if (error) {
-      dispatch(clearError());
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (data) => {
     try {
-      await dispatch(loginUser(formData)).unwrap();
+      await dispatch(loginUser(data)).unwrap();
       navigate('/dashboard');
     } catch (err) {
       // Error is handled by Redux
@@ -91,98 +77,82 @@ const Login = () => {
             <p className="text-gray-600">Sign in to your account</p>
           </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
+          <Form onSubmit={handleSubmit(onSubmit)} className="mt-8">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
+              <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-sm font-medium text-destructive">{error}</p>
               </div>
             )}
 
             <div className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="text"
-                  autoComplete="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`appearance-none relative block w-full px-4 py-3 border ${
-                    validationErrors.email ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors`}
-                  placeholder="Enter your email"
-                />
-                {validationErrors.email && (
-                  <p className="mt-1 text-sm text-red-600 font-medium">{validationErrors.email}</p>
-                )}
-              </div>
+              <FormItem>
+                <FormLabel htmlFor="email">Email Address</FormLabel>
+                <FormControl>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="Enter your email"
+                    className={errors.email ? 'border-destructive' : undefined}
+                    {...register('email')}
+                  />
+                </FormControl>
+                {errors.email && <FormMessage>{errors.email.message}</FormMessage>}
+              </FormItem>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`appearance-none relative block w-full px-4 py-3 border ${
-                    validationErrors.password ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors`}
-                  placeholder="Enter your password"
-                />
-                {validationErrors.password && (
-                  <p className="mt-1 text-sm text-red-600 font-medium">{validationErrors.password}</p>
-                )}
-              </div>
+              <FormItem>
+                <FormLabel htmlFor="password">Password</FormLabel>
+                <FormControl>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    className={errors.password ? 'border-destructive' : undefined}
+                    {...register('password')}
+                  />
+                </FormControl>
+                {errors.password && <FormMessage>{errors.password.message}</FormMessage>}
+              </FormItem>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
+            <div className="flex items-center justify-between mt-6">
+              <div className="flex items-center space-x-2">
                 <input
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
                   className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <Label htmlFor="remember-me" className="text-sm text-gray-700 cursor-pointer">
                   Remember me
-                </label>
+                </Label>
               </div>
 
-              <div className="text-sm">
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
-                  Forgot password?
-                </a>
-              </div>
+              <Link to="#" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+                Forgot password?
+              </Link>
             </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isLoading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Signing in...
-                  </span>
-                ) : (
-                  'Sign in'
-                )}
-              </button>
-            </div>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full mt-6"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                'Sign in'
+              )}
+            </Button>
 
-            <div className="text-center">
+            <div className="text-center mt-6">
               <p className="text-sm text-gray-600">
                 Don't have an account?{' '}
                 <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
@@ -190,7 +160,7 @@ const Login = () => {
                 </Link>
               </p>
             </div>
-          </form>
+          </Form>
         </div>
       </div>
     </div>

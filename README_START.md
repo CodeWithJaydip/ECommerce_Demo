@@ -1,35 +1,36 @@
 # Quick Start Guide
 
-## Automatic Start (Recommended)
+## Running the Project
 
-Simply run:
+You need to run both the backend API and React frontend separately:
+
+**Terminal 1 - Backend API:**
 ```powershell
 cd src\ECommerce.Api
 dotnet run
 ```
 
-This will automatically:
-1. Start the .NET API backend
-2. Launch the React frontend in a separate window
+**Terminal 2 - React Frontend:**
+```powershell
+cd client
+npm run dev
+```
 
-Both servers will start automatically!
+## Alternative: Use Startup Scripts (Optional)
 
-## Manual Start (Alternative)
+If you prefer to use the startup scripts:
 
-If you prefer to start them manually or the automatic start doesn't work:
-
-**Option 1: Use the startup script**
+**Option 1: Batch Script**
 ```powershell
 .\start-dev.bat
 ```
-or
+
+**Option 2: PowerShell Script**
 ```powershell
 .\start-dev.ps1
 ```
 
-**Option 2: Run separately**
-- Terminal 1: `cd src\ECommerce.Api; dotnet run`
-- Terminal 2: `cd client; npm run dev`
+These scripts will start both servers in separate windows.
 
 ## Access Points
 
@@ -40,6 +41,6 @@ Once running:
 
 ## Notes
 
-- The automatic React server start only works in **Debug** mode
-- Both servers run in separate windows
-- Close the windows to stop the servers
+- Both servers must be started separately
+- Run them in separate terminal windows
+- Close the terminal windows or press Ctrl+C to stop the servers
