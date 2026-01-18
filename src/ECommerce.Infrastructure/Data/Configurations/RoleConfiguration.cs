@@ -41,5 +41,35 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
             .WithOne(ur => ur.Role)
             .HasForeignKey(ur => ur.RoleId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Seed data
+        var seedCreatedAt = new DateTime(2026, 01, 12, 00, 00, 00, DateTimeKind.Utc);
+
+        builder.HasData(
+            new Role 
+            { 
+                Id = 2, 
+                Name = "Super Admin", 
+                Description = "Full system access with all administrative privileges", 
+                CreatedAt = seedCreatedAt, 
+                IsActive = true 
+            },
+            new Role 
+            { 
+                Id = 3, 
+                Name = "Seller", 
+                Description = "Can create and manage products, view orders, manage inventory", 
+                CreatedAt = seedCreatedAt, 
+                IsActive = true 
+            },
+            new Role 
+            { 
+                Id = 4, 
+                Name = "Buyer", 
+                Description = "Can browse products, place orders, and manage personal account", 
+                CreatedAt = seedCreatedAt, 
+                IsActive = true 
+            }
+        );
     }
 }

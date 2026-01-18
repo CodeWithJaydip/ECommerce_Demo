@@ -23,7 +23,6 @@ public class CategoryController : ControllerBase
     /// Get all categories
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(ApiResponse<List<CategoryResponse>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<List<CategoryResponse>>>> GetAll(CancellationToken cancellationToken)
     {
         var categories = await _categoryService.GetAllAsync(cancellationToken);
@@ -34,8 +33,6 @@ public class CategoryController : ControllerBase
     /// Get category by ID
     /// </summary>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(ApiResponse<CategoryResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<CategoryResponse>>> GetById(int id, CancellationToken cancellationToken)
     {
         var category = await _categoryService.GetByIdAsync(id, cancellationToken);
@@ -50,8 +47,6 @@ public class CategoryController : ControllerBase
     /// Create a new category
     /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(ApiResponse<CategoryResponse>), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<CategoryResponse>>> Create([FromBody] CreateCategoryRequest request, CancellationToken cancellationToken)
     {
         var category = await _categoryService.CreateAsync(request, cancellationToken);
@@ -65,9 +60,6 @@ public class CategoryController : ControllerBase
     /// Update an existing category
     /// </summary>
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(ApiResponse<CategoryResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<CategoryResponse>>> Update(int id, [FromBody] UpdateCategoryRequest request, CancellationToken cancellationToken)
     {
         var category = await _categoryService.UpdateAsync(id, request, cancellationToken);
@@ -78,8 +70,6 @@ public class CategoryController : ControllerBase
     /// Delete a category (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse>> Delete(int id, CancellationToken cancellationToken)
     {
         var deleted = await _categoryService.DeleteAsync(id, cancellationToken);

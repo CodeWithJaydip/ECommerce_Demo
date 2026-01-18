@@ -162,7 +162,21 @@ builder.Services.AddCors(options =>
     // CORS must be called before UseAuthentication and UseAuthorization
     app.UseCors("ReactClient");
 
-    app.UseHttpsRedirection();
+    // Only use HTTPS redirection when HTTPS is configured
+    // Skip in development when only HTTP is used to avoid warnings
+    if (app.Environment.IsProduction())
+    {
+        app.UseHttpsRedirection();
+    }
+    else
+    {
+        // In development, only use HTTPS redirection if HTTPS port is configured
+        var httpsPort = Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_PORT");
+        if (!string.IsNullOrEmpty(httpsPort))
+        {
+            app.UseHttpsRedirection();
+        }
+    }
 
     // Add global exception handler middleware (must be before UseAuthentication)
     app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
