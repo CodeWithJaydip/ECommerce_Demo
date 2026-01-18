@@ -17,6 +17,12 @@ public class RoleRepository : IRoleRepository
         _context = context;
     }
 
+    public async Task<Role?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Roles
+            .FirstOrDefaultAsync(r => r.Id == id && r.IsActive, cancellationToken);
+    }
+
     public async Task<Role?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
     {
         return await _context.Roles

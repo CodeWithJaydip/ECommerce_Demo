@@ -1,4 +1,5 @@
-using ECommerce.Application.Features.Auth.DTOs;
+using ECommerce.Application.Features.Auth.DTOs.Requests;
+using ECommerce.Application.Features.Auth.DTOs.Responses;
 using ECommerce.Application.Features.Auth.Interfaces;
 using ECommerce.Domain.Entities;
 using ECommerce.Infrastructure.Services;
@@ -8,27 +9,18 @@ namespace ECommerce.Infrastructure.Services;
 /// <summary>
 /// Service implementation for authentication
 /// </summary>
-public class AuthService : IAuthService
+public class AuthService(
+    IUserRepository userRepository,
+    IRoleRepository roleRepository,
+    IPasswordHasher passwordHasher,
+    IJwtTokenService jwtTokenService,
+    IUnitOfWork unitOfWork) : IAuthService
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IRoleRepository _roleRepository;
-    private readonly IPasswordHasher _passwordHasher;
-    private readonly IJwtTokenService _jwtTokenService;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public AuthService(
-        IUserRepository userRepository,
-        IRoleRepository roleRepository,
-        IPasswordHasher passwordHasher,
-        IJwtTokenService jwtTokenService,
-        IUnitOfWork unitOfWork)
-    {
-        _userRepository = userRepository;
-        _roleRepository = roleRepository;
-        _passwordHasher = passwordHasher;
-        _jwtTokenService = jwtTokenService;
-        _unitOfWork = unitOfWork;
-    }
+    private readonly IUserRepository _userRepository = userRepository;
+    private readonly IRoleRepository _roleRepository = roleRepository;
+    private readonly IPasswordHasher _passwordHasher = passwordHasher;
+    private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
@@ -54,23 +46,24 @@ public class AuthService : IAuthService
         };
         user = await _userRepository.CreateAsync(user, cancellationToken);
 
-        // Get Customer role or create it (tracked but not saved yet)
-        var customerRole = await _roleRepository.GetByNameAsync(nameof(ECommerce.Domain.Enums.UserRole.Customer), cancellationToken);
-        if (customerRole == null)
+        // Get Buyer role (should exist from seed data)
+        var buyerRole = await _roleRepository.GetByNameAsync("Buyer", cancellationToken);
+        if (buyerRole == null)
         {
-            customerRole = new Role
+            // Fallback: create Buyer role if it doesn't exist (shouldn't happen with seed data)
+            buyerRole = new Role
             {
-                Name = nameof(ECommerce.Domain.Enums.UserRole.Customer),
-                Description = "Customer role",
+                Name = "Buyer",
+                Description = "Can browse products, place orders, and manage personal account",
                 IsActive = true
             };
-            customerRole = await _roleRepository.CreateAsync(customerRole, cancellationToken);
+            buyerRole = await _roleRepository.CreateAsync(buyerRole, cancellationToken);
         }
 
-        // Assign Customer role to user
-        // Note: user.Id and customerRole.Id are still 0 here, but EF Core will resolve them on SaveChanges
+        // Assign Buyer role to user
+        // Note: user.Id and buyerRole.Id are still 0 here, but EF Core will resolve them on SaveChanges
         // using the tracked entities and navigation properties
-        await _userRepository.AddUserRoleAsync(user.Id, customerRole.Id, cancellationToken);
+        await _userRepository.AddUserRoleAsync(user.Id, buyerRole.Id, cancellationToken);
 
         // Save all changes in a single transaction
         // EF Core will resolve UserId and RoleId from navigation properties

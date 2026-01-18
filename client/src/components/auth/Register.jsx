@@ -71,7 +71,7 @@ const Register = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
@@ -95,7 +95,7 @@ const Register = () => {
         phoneNumber: data.phoneNumber || null,
       };
       await dispatch(registerUser(registerData)).unwrap();
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       console.error('Registration failed:', err);
     }

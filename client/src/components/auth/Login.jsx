@@ -46,7 +46,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
@@ -61,7 +61,7 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       await dispatch(loginUser(data)).unwrap();
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       // Error is handled by Redux
       console.error('Login failed:', err);

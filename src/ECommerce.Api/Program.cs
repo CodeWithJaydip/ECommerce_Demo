@@ -7,6 +7,7 @@ using System.Text;
 using ECommerce.Api.Middleware;
 using ECommerce.Application.Features.Auth.Interfaces;
 using ECommerce.Application.Features.Category.Interfaces;
+using ECommerce.Application.Features.User.Interfaces;
 using ECommerce.Infrastructure.Data;
 using ECommerce.Infrastructure.Repositories;
 using ECommerce.Infrastructure.Services;
@@ -59,6 +60,7 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");

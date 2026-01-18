@@ -1,5 +1,6 @@
 using ECommerce.Application.Features.Auth.Interfaces;
-using ECommerce.Application.Features.Category.DTOs;
+using ECommerce.Application.Features.Category.DTOs.Requests;
+using ECommerce.Application.Features.Category.DTOs.Responses;
 using ECommerce.Application.Features.Category.Interfaces;
 using ECommerce.Domain.Constants;
 using ECommerce.Domain.Entities;
@@ -10,18 +11,12 @@ namespace ECommerce.Infrastructure.Services;
 /// <summary>
 /// Service implementation for Category operations
 /// </summary>
-public class CategoryService : ICategoryService
+public class CategoryService(
+    ICategoryRepository categoryRepository,
+    IUnitOfWork unitOfWork) : ICategoryService
 {
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public CategoryService(
-        ICategoryRepository categoryRepository,
-        IUnitOfWork unitOfWork)
-    {
-        _categoryRepository = categoryRepository;
-        _unitOfWork = unitOfWork;
-    }
+    private readonly ICategoryRepository _categoryRepository = categoryRepository;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<CategoryResponse?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {

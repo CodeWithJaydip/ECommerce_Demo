@@ -1,4 +1,5 @@
-using ECommerce.Application.Features.Category.DTOs;
+using ECommerce.Application.Features.Category.DTOs.Requests;
+using ECommerce.Application.Features.Category.DTOs.Responses;
 
 namespace ECommerce.Application.Features.Category.Interfaces;
 

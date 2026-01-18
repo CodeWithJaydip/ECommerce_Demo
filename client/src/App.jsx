@@ -6,6 +6,7 @@ import Landing from './components/landing/Landing';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Dashboard from './components/dashboard/Dashboard';
+import UserManagement from './components/admin/UserManagement';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
@@ -27,6 +28,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute>
+              <UserManagement />
             </ProtectedRoute>
           }
         />

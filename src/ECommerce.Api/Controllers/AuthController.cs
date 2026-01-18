@@ -1,20 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using ECommerce.Application.Common.Models;
-using ECommerce.Application.Features.Auth.DTOs;
+using ECommerce.Application.Features.Auth.DTOs.Requests;
+using ECommerce.Application.Features.Auth.DTOs.Responses;
 using ECommerce.Application.Features.Auth.Interfaces;
 
 namespace ECommerce.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController(IAuthService authService) : ControllerBase
 {
-    private readonly IAuthService _authService;
-
-    public AuthController(IAuthService authService)
-    {
-        _authService = authService;
-    }
+    private readonly IAuthService _authService = authService;
 
     /// <summary>
     /// Register a new user
