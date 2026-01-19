@@ -8,6 +8,8 @@ import Register from './components/auth/Register';
 import Dashboard from './components/dashboard/Dashboard';
 import UserManagement from './components/admin/UserManagement';
 import CategoryManagement from './components/admin/CategoryManagement';
+import ProductList from './components/products/ProductList';
+import ProductForm from './components/products/ProductForm';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
@@ -45,6 +47,26 @@ function App() {
           element={
             <ProtectedRoute>
               <CategoryManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products"
+          element={<ProductList />}
+        />
+        <Route
+          path="/products/new"
+          element={
+            <ProtectedRoute>
+              <ProductForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products/edit/:id"
+          element={
+            <ProtectedRoute>
+              <ProductForm />
             </ProtectedRoute>
           }
         />

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, Settings, LogOut, FolderTree } from 'lucide-react';
+import { ShoppingBag, User, Settings, LogOut, FolderTree, Package } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { logout } from '../../store/slices/authSlice';
@@ -45,6 +45,14 @@ const Header = () => {
                     </Button>
                   </Link>
                 )}
+                
+                {/* Products Link */}
+                <Link to="/products">
+                  <Button variant="ghost" className="hidden sm:inline-flex">
+                    <Package className="h-4 w-4 mr-2" />
+                    Products
+                  </Button>
+                </Link>
                 
                 {/* Dashboard Link */}
                 <Link to="/dashboard">

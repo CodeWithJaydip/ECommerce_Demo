@@ -51,6 +51,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ECommerce.Application.Features.Product.Interfaces.IProductRepository, ECommerce.Infrastructure.Repositories.ProductRepository>();
 
 // Register UnitOfWork
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -61,6 +62,7 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ECommerce.Application.Features.Product.Interfaces.IProductService, ECommerce.Infrastructure.Services.ProductService>();
 builder.Services.AddScoped<ECommerce.Infrastructure.Services.IFileUploadService, ECommerce.Infrastructure.Services.FileUploadService>();
 
 // Configure JWT Authentication
