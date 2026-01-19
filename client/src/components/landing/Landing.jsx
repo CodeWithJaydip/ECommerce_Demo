@@ -1,19 +1,11 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { ShoppingBag, Truck, Shield, Star, ArrowRight, CheckCircle, Sparkles, User, LogOut, Settings } from 'lucide-react';
+import { ShoppingBag, Truck, Shield, Star, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '../ui/button';
-import { useAppDispatch, useAppSelector } from '../../hooks/redux';
-import { logout } from '../../store/slices/authSlice';
+import { Card, CardContent } from '../ui/card';
+import Header from '../common/Header';
 
 const Landing = () => {
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/');
-  };
   // Hero carousel images
   const heroImages = [
     "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&h=900&fit=crop&q=80",
@@ -36,71 +28,7 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <ShoppingBag className="h-8 w-8 text-primary-600" />
-              <span className="text-2xl font-bold text-gray-900">ECommerce</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              {isAuthenticated && user ? (
-                <>
-                  {/* User Management Link (Super Admin only) */}
-                  {user.roles && user.roles.includes('Super Admin') && (
-                    <Link to="/admin/users">
-                      <Button variant="ghost" className="hidden sm:inline-flex">
-                        <Settings className="h-4 w-4 mr-2" />
-                        User Management
-                      </Button>
-                    </Link>
-                  )}
-                  
-                  {/* Dashboard Link */}
-                  <Link to="/dashboard">
-                    <Button variant="ghost" className="hidden sm:inline-flex">
-                      <User className="h-4 w-4 mr-2" />
-                      Dashboard
-                    </Button>
-                  </Link>
-                  
-                  {/* User Info & Logout */}
-                  <div className="flex items-center space-x-3">
-                    <div className="hidden sm:flex flex-col text-right">
-                      <span className="text-sm font-medium text-gray-900">
-                        {user.firstName} {user.lastName}
-                      </span>
-                      <span className="text-xs text-gray-500">{user.email}</span>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      onClick={handleLogout}
-                      className="hidden sm:inline-flex"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Link to="/login">
-                    <Button variant="ghost" className="hidden sm:inline-flex">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link to="/register">
-                    <Button className="bg-primary-600 hover:bg-primary-700">
-                      Get Started
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Header />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -242,21 +170,23 @@ const Landing = () => {
                 color: "text-yellow-600 bg-yellow-100"
               }
             ].map((feature, index) => (
-              <div
+              <Card
                 key={index}
-                className="group p-8 rounded-2xl border border-gray-200 hover:border-primary-300 hover:shadow-xl transition-all duration-300 animate-fade-in-up"
+                className="group border-gray-200 hover:border-primary-300 hover:shadow-xl transition-all duration-300 animate-fade-in-up"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className={`w-16 h-16 ${feature.color} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className="h-8 w-8" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
+                <CardContent className="p-8">
+                  <div className={`w-16 h-16 ${feature.color} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                    <feature.icon className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
@@ -293,9 +223,9 @@ const Landing = () => {
                 image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&q=80"
               }
             ].map((category, index) => (
-              <div
+              <Card
                 key={index}
-                className="group relative h-64 rounded-2xl overflow-hidden cursor-pointer transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl"
+                className="group relative h-64 overflow-hidden cursor-pointer transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border-0"
               >
                 {/* Background Image */}
                 <img 
@@ -308,14 +238,14 @@ const Landing = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300"></div>
                 
                 {/* Content */}
-                <div className="relative h-full flex flex-col justify-end p-6 z-10">
+                <CardContent className="relative h-full flex flex-col justify-end p-6 z-10">
                   <h3 className="text-2xl font-bold text-white mb-2">{category.name}</h3>
                   <p className="text-sm text-white/90 font-medium flex items-center group-hover:translate-x-2 transition-transform duration-300">
                     Shop Now 
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </p>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>

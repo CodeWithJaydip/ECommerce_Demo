@@ -1,10 +1,37 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, Edit2, Save, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Edit2, Save, X, ArrowUpDown, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
+import { Card, CardContent } from '../ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/table';
 import { useAppSelector } from '../../hooks/redux';
 import * as userApi from '../../services/api/userApi';
+import Header from '../common/Header';
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -37,6 +64,28 @@ const UserManagement = () => {
   const [metadata, setMetadata] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // State for editing
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    isActive: true,
+    roleIds: [], // Array of role IDs
+  });
+
+  // State for delete dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  // Available roles mapping (based on seed data)
+  const availableRoles = [
+    { id: 2, name: 'Super Admin' },
+    { id: 3, name: 'Seller' },
+    { id: 4, name: 'Buyer' },
+  ];
 
   // Fetch users
   const fetchUsers = async () => {
@@ -143,6 +192,94 @@ const UserManagement = () => {
     setPageNumber(1);
   };
 
+  // Handle edit click
+  const handleEditClick = (user) => {
+    setEditingUserId(user.id);
+    // Map role names to role IDs
+    const userRoleIds = user.roles
+      ? user.roles
+          .map(roleName => availableRoles.find(r => r.name === roleName)?.id)
+          .filter(id => id !== undefined)
+      : [];
+    
+    setEditFormData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber || '',
+      isActive: user.isActive,
+      roleIds: userRoleIds,
+    });
+  };
+
+  // Handle save edit
+  const handleSaveEdit = async () => {
+    if (!editingUserId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Update user info (exclude roleIds from this call)
+      const { roleIds, ...userData } = editFormData;
+      await userApi.updateUser(editingUserId, userData);
+      
+      // Update user roles separately (always call, even if empty array to remove all roles)
+      if (roleIds !== undefined) {
+        await userApi.updateUserRoles(editingUserId, { roleIds: roleIds || [] });
+      }
+      
+      setEditingUserId(null);
+      // Refresh users list
+      await fetchUsers();
+    } catch (err) {
+      setError(err.message || 'Failed to update user');
+      console.error('Error updating user:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    setEditingUserId(null);
+    setEditFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+      isActive: true,
+      roleIds: [],
+    });
+  };
+
+  // Handle delete click - open dialog
+  const handleDeleteClick = (userId) => {
+    setUserToDelete(userId);
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle confirm delete (soft delete - set IsActive to false)
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await userApi.deleteUser(userToDelete);
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      // Refresh users list
+      await fetchUsers();
+    } catch (err) {
+      setError(err.message || 'Failed to delete user');
+      console.error('Error deleting user:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -153,8 +290,10 @@ const UserManagement = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      <Header />
+      
+      {/* Page Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200 pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
@@ -170,67 +309,77 @@ const UserManagement = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <Input
-              placeholder="First Name"
-              value={filters.firstName}
-              onChange={(e) => handleFilterChange('firstName', e.target.value)}
-              className="w-full"
-            />
-            <Input
-              placeholder="Last Name"
-              value={filters.lastName}
-              onChange={(e) => handleFilterChange('lastName', e.target.value)}
-              className="w-full"
-            />
-            <Input
-              placeholder="Email"
-              value={filters.email}
-              onChange={(e) => handleFilterChange('email', e.target.value)}
-              className="w-full"
-            />
-            <Input
-              placeholder="Phone Number"
-              value={filters.phoneNumber}
-              onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
-              className="w-full"
-            />
-            <select
-              value={filters.isActive === null ? '' : filters.isActive.toString()}
-              onChange={(e) => handleFilterChange('isActive', e.target.value === '' ? null : e.target.value === 'true')}
-              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">All Status</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
-            <Input
-              placeholder="Role Name"
-              value={filters.roleName}
-              onChange={(e) => handleFilterChange('roleName', e.target.value)}
-              className="w-full"
-            />
-            <select
-              value={filters.isLocked === null ? '' : filters.isLocked.toString()}
-              onChange={(e) => handleFilterChange('isLocked', e.target.value === '' ? null : e.target.value === 'true')}
-              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">All Lock Status</option>
-              <option value="true">Locked</option>
-              <option value="false">Unlocked</option>
-            </select>
-            <div className="flex gap-2">
-              <Button onClick={fetchUsers} variant="outline">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
-              <Button onClick={clearFilters} variant="ghost">
-                Clear
-              </Button>
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <Input
+                placeholder="First Name"
+                value={filters.firstName}
+                onChange={(e) => handleFilterChange('firstName', e.target.value)}
+                className="w-full"
+              />
+              <Input
+                placeholder="Last Name"
+                value={filters.lastName}
+                onChange={(e) => handleFilterChange('lastName', e.target.value)}
+                className="w-full"
+              />
+              <Input
+                placeholder="Email"
+                value={filters.email}
+                onChange={(e) => handleFilterChange('email', e.target.value)}
+                className="w-full"
+              />
+              <Input
+                placeholder="Phone Number"
+                value={filters.phoneNumber}
+                onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
+                className="w-full"
+              />
+              <Select
+                value={filters.isActive === null ? 'all' : filters.isActive.toString()}
+                onValueChange={(value) => handleFilterChange('isActive', value === 'all' ? null : value === 'true')}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Role Name"
+                value={filters.roleName}
+                onChange={(e) => handleFilterChange('roleName', e.target.value)}
+                className="w-full"
+              />
+              <Select
+                value={filters.isLocked === null ? 'all' : filters.isLocked.toString()}
+                onValueChange={(value) => handleFilterChange('isLocked', value === 'all' ? null : value === 'true')}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All Lock Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Lock Status</SelectItem>
+                  <SelectItem value="true">Locked</SelectItem>
+                  <SelectItem value="false">Unlocked</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Button onClick={fetchUsers} variant="outline">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
+                <Button onClick={clearFilters} variant="ghost">
+                  Clear
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Error Message */}
         {error && (
@@ -240,142 +389,250 @@ const UserManagement = () => {
         )}
 
         {/* Users Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors ${
-                      isSorted('FirstName') 
-                        ? 'bg-primary-50 text-primary-700' 
-                        : 'text-gray-500'
-                    }`}
-                    onClick={() => handleSort('FirstName')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>First Name</span>
-                      {getSortIcon('FirstName')}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors ${
-                      isSorted('LastName') 
-                        ? 'bg-primary-50 text-primary-700' 
-                        : 'text-gray-500'
-                    }`}
-                    onClick={() => handleSort('LastName')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>Last Name</span>
-                      {getSortIcon('LastName')}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors ${
-                      isSorted('Email') 
-                        ? 'bg-primary-50 text-primary-700' 
-                        : 'text-gray-500'
-                    }`}
-                    onClick={() => handleSort('Email')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>Email</span>
-                      {getSortIcon('Email')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Roles
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors ${
-                      isSorted('CreatedAt') 
-                        ? 'bg-primary-50 text-primary-700' 
-                        : 'text-gray-500'
-                    }`}
-                    onClick={() => handleSort('CreatedAt')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>Created</span>
-                      {getSortIcon('CreatedAt')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead
+                  className={`cursor-pointer hover:bg-muted transition-colors ${
+                    isSorted('FirstName') 
+                      ? 'bg-primary-50 text-primary-700' 
+                      : ''
+                  }`}
+                  onClick={() => handleSort('FirstName')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>First Name</span>
+                    {getSortIcon('FirstName')}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className={`cursor-pointer hover:bg-muted transition-colors ${
+                    isSorted('LastName') 
+                      ? 'bg-primary-50 text-primary-700' 
+                      : ''
+                  }`}
+                  onClick={() => handleSort('LastName')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Last Name</span>
+                    {getSortIcon('LastName')}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className={`cursor-pointer hover:bg-muted transition-colors ${
+                    isSorted('Email') 
+                      ? 'bg-primary-50 text-primary-700' 
+                      : ''
+                  }`}
+                  onClick={() => handleSort('Email')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Email</span>
+                    {getSortIcon('Email')}
+                  </div>
+                </TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Roles</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead
+                  className={`cursor-pointer hover:bg-muted transition-colors ${
+                    isSorted('CreatedAt') 
+                      ? 'bg-primary-50 text-primary-700' 
+                      : ''
+                  }`}
+                  onClick={() => handleSort('CreatedAt')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Created</span>
+                    {getSortIcon('CreatedAt')}
+                  </div>
+                </TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
                 {isLoading ? (
-                  <tr>
-                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                  <TableRow>
+                    <TableCell colSpan="8" className="text-center text-muted-foreground">
                       Loading users...
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : users.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                  <TableRow>
+                    <TableCell colSpan="8" className="text-center text-muted-foreground">
                       No users found
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {user.firstName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {user.lastName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {user.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {user.phoneNumber || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <div className="flex flex-wrap gap-1">
-                          {user.roles?.map((role) => (
-                            <span
-                              key={role}
-                              className="px-2 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-700"
-                            >
-                              {role}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            user.isActive
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}
-                        >
-                          {user.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        {editingUserId === user.id ? (
+                          <Input
+                            value={editFormData.firstName}
+                            onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                            className="w-32"
+                          />
+                        ) : (
+                          user.firstName
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editingUserId === user.id ? (
+                          <Input
+                            value={editFormData.lastName}
+                            onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                            className="w-32"
+                          />
+                        ) : (
+                          user.lastName
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editingUserId === user.id ? (
+                          <Input
+                            type="email"
+                            value={editFormData.email}
+                            onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                            className="w-48"
+                          />
+                        ) : (
+                          user.email
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editingUserId === user.id ? (
+                          <Input
+                            value={editFormData.phoneNumber}
+                            onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
+                            className="w-32"
+                          />
+                        ) : (
+                          user.phoneNumber || '-'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editingUserId === user.id ? (
+                          <div className="flex flex-col gap-2 w-48">
+                            {availableRoles.map((role) => (
+                              <label key={role.id} className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={editFormData.roleIds.includes(role.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setEditFormData({
+                                        ...editFormData,
+                                        roleIds: [...editFormData.roleIds, role.id],
+                                      });
+                                    } else {
+                                      setEditFormData({
+                                        ...editFormData,
+                                        roleIds: editFormData.roleIds.filter(id => id !== role.id),
+                                      });
+                                    }
+                                  }}
+                                  className="h-4 w-4 text-primary-600 rounded border-gray-300"
+                                />
+                                <span className="text-sm text-gray-700">{role.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {user.roles?.map((role) => (
+                              <span
+                                key={role}
+                                className="px-2 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-700"
+                              >
+                                {role}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editingUserId === user.id ? (
+                          <Select
+                            value={editFormData.isActive ? 'true' : 'false'}
+                            onValueChange={(value) => setEditFormData({ ...editFormData, isActive: value === 'true' })}
+                          >
+                            <SelectTrigger className="w-32 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="true">Active</SelectItem>
+                              <SelectItem value="false">Inactive</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              user.isActive
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {user.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {new Date(user.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <Button variant="ghost" size="sm">
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {editingUserId === user.id ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleSaveEdit}
+                                disabled={isLoading}
+                                className="text-green-600 hover:text-green-700"
+                              >
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancelEdit}
+                                disabled={isLoading}
+                                className="text-gray-600 hover:text-gray-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditClick(user)}
+                                disabled={isLoading}
+                                className="text-blue-600 hover:text-blue-700"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteClick(user.id)}
+                                disabled={isLoading}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
+            </TableBody>
+          </Table>
 
           {/* Pagination */}
           {metadata && (
@@ -409,8 +666,38 @@ const UserManagement = () => {
               </div>
             </div>
           )}
-        </div>
+        </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) {
+          setUserToDelete(null);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will deactivate the user. The user will no longer be able to access the system.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Deactivating...' : 'Deactivate User'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

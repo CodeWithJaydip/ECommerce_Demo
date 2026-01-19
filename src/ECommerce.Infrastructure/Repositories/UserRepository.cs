@@ -240,4 +240,33 @@ public class UserRepository : IUserRepository
         }
         // No SaveChangesAsync here - handled by UnitOfWork
     }
+
+    public async Task UpdateUserStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default)
+    {
+        // Use FindAsync to get tracked entity, or attach if not tracked
+        var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken);
+        
+        if (user == null)
+        {
+            // If not found, try to get it (might be filtered by IsActive in GetByIdAsync)
+            user = await _context.Users
+                .IgnoreQueryFilters() // Bypass any query filters (like IsActive)
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            
+            if (user == null)
+            {
+                throw new KeyNotFoundException($"User with ID {userId} not found");
+            }
+        }
+
+        // Mark only IsActive and UpdatedAt as modified to avoid validation issues
+        user.IsActive = isActive;
+        user.UpdatedAt = DateTime.UtcNow;
+        
+        // Explicitly mark only these properties as modified
+        _context.Entry(user).Property(u => u.IsActive).IsModified = true;
+        _context.Entry(user).Property(u => u.UpdatedAt).IsModified = true;
+        
+        // No SaveChangesAsync here - handled by UnitOfWork
+    }
 }

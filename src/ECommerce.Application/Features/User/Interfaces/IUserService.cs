@@ -28,4 +28,9 @@ public interface IUserService
     /// Update user roles
     /// </summary>
     Task<UserResponse> UpdateRolesAsync(int id, UpdateUserRolesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete (deactivate) user
+    /// </summary>
+    Task<UserResponse> DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

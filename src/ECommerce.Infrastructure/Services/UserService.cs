@@ -100,13 +100,38 @@ public class UserService(
             }
         }
 
-        // Remove all existing roles
-        await _userRepository.RemoveAllUserRolesAsync(id, cancellationToken);
+        // Get current active role IDs
+        var currentActiveRoleIds = user.UserRoles
+            .Where(ur => ur.IsActive)
+            .Select(ur => ur.RoleId)
+            .ToList();
 
-        // Add new roles
-        foreach (var roleId in request.RoleIds)
+        // Determine which roles to add and which to remove
+        var rolesToAdd = request.RoleIds.Except(currentActiveRoleIds).ToList();
+        var rolesToRemove = currentActiveRoleIds.Except(request.RoleIds).ToList();
+
+        // Remove roles that are no longer needed
+        foreach (var roleId in rolesToRemove)
         {
-            await _userRepository.AddUserRoleAsync(id, roleId, cancellationToken);
+            await _userRepository.RemoveUserRoleAsync(id, roleId, cancellationToken);
+        }
+
+        // Add new roles (only those that don't already exist)
+        foreach (var roleId in rolesToAdd)
+        {
+            // Check if UserRole already exists (even if inactive)
+            var existingUserRole = user.UserRoles.FirstOrDefault(ur => ur.RoleId == roleId);
+            if (existingUserRole != null)
+            {
+                // Reactivate existing UserRole instead of creating new one
+                existingUserRole.IsActive = true;
+                existingUserRole.UpdatedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                // Add new UserRole
+                await _userRepository.AddUserRoleAsync(id, roleId, cancellationToken);
+            }
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -114,6 +139,24 @@ public class UserService(
         // Reload user with roles
         var updatedUser = await _userRepository.GetByIdAsync(id, cancellationToken);
         return MapToResponse(updatedUser!);
+    }
+
+    public async Task<UserResponse> DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        // Get user first (this will include roles and be tracked)
+        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with ID {id} not found");
+        }
+
+        // Soft delete - only update IsActive and UpdatedAt
+        // This method uses the tracked entity and marks only specific properties as modified
+        await _userRepository.UpdateUserStatusAsync(id, false, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // The user entity is already tracked and updated, so we can use it directly
+        return MapToResponse(user);
     }
 
     private static UserResponse MapToResponse(User user)

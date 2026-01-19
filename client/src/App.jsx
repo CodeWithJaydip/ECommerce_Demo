@@ -7,6 +7,7 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Dashboard from './components/dashboard/Dashboard';
 import UserManagement from './components/admin/UserManagement';
+import CategoryManagement from './components/admin/CategoryManagement';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
@@ -36,6 +37,14 @@ function App() {
           element={
             <ProtectedRoute>
               <UserManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/categories"
+          element={
+            <ProtectedRoute>
+              <CategoryManagement />
             </ProtectedRoute>
           }
         />

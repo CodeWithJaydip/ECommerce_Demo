@@ -68,4 +68,16 @@ public class UserController(IUserService userService) : ControllerBase
         var user = await _userService.UpdateRolesAsync(id, request, cancellationToken);
         return Ok(ApiResponse<UserResponse>.SuccessResponse(user, "User roles updated successfully"));
     }
+
+    /// <summary>
+    /// Delete (deactivate) user
+    /// </summary>
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<ApiResponse<UserResponse>>> Delete(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var user = await _userService.DeleteAsync(id, cancellationToken);
+        return Ok(ApiResponse<UserResponse>.SuccessResponse(user, "User deleted successfully"));
+    }
 }

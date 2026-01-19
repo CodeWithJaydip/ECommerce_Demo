@@ -39,4 +39,9 @@ public interface IUserRepository
     /// Remove all user roles
     /// </summary>
     Task RemoveAllUserRolesAsync(int userId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Update user status (IsActive) without updating other properties
+    /// </summary>
+    Task UpdateUserStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default);
 }

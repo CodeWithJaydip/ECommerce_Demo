@@ -1,4 +1,4 @@
-import { get, put } from './apiClient';
+import { get, put, del } from './apiClient';
 
 /**
  * Get paginated list of users with filtering and sorting
@@ -53,4 +53,13 @@ export const updateUser = async (id, data) => {
  */
 export const updateUserRoles = async (id, data) => {
   return await put(`/api/user/${id}/roles`, data);
+};
+
+/**
+ * Delete (deactivate) user
+ * @param {number} id - User ID
+ * @returns {Promise<Object>} Deleted user object
+ */
+export const deleteUser = async (id) => {
+  return await del(`/api/user/${id}`);
 };
