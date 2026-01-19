@@ -14,4 +14,6 @@ public record UpdateCategoryRequest
 
     [StringLength(CategoryConstants.DescriptionMaxLength, ErrorMessage = CategoryConstants.DescriptionLengthInvalid)]
     public string? Description { get; init; }
+
+    public string? ImagePath { get; init; }
 }

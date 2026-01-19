@@ -25,6 +25,9 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(c => c.Description)
             .HasMaxLength(255);
 
+        builder.Property(c => c.ImagePath)
+            .HasMaxLength(500);
+
         builder.Property(c => c.IsActive)
             .HasDefaultValue(true);
 

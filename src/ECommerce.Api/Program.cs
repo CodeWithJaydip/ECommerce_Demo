@@ -61,6 +61,7 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ECommerce.Infrastructure.Services.IFileUploadService, ECommerce.Infrastructure.Services.FileUploadService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -163,6 +164,26 @@ builder.Services.AddCors(options =>
 
     // CORS must be called before UseAuthentication and UseAuthorization
     app.UseCors("ReactClient");
+
+    // Enable static files to serve uploaded images
+    // Static files are served from wwwroot folder by default
+    // Configure static files with CORS support
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = ctx =>
+        {
+            // Add CORS headers to static file responses
+            var origin = ctx.Context.Request.Headers["Origin"].ToString();
+            var allowedOrigins = app.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
+                ?? new[] { "http://localhost:3000" };
+            
+            if (!string.IsNullOrEmpty(origin) && allowedOrigins.Contains(origin))
+            {
+                ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", origin);
+                ctx.Context.Response.Headers.Append("Access-Control-Allow-Credentials", "true");
+            }
+        }
+    });
 
     // Only use HTTPS redirection when HTTPS is configured
     // Skip in development when only HTTP is used to avoid warnings

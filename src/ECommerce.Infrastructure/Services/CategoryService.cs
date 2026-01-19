@@ -13,10 +13,12 @@ namespace ECommerce.Infrastructure.Services;
 /// </summary>
 public class CategoryService(
     ICategoryRepository categoryRepository,
-    IUnitOfWork unitOfWork) : ICategoryService
+    IUnitOfWork unitOfWork,
+    IFileUploadService fileUploadService) : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository = categoryRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IFileUploadService _fileUploadService = fileUploadService;
 
     public async Task<CategoryResponse?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
@@ -42,6 +44,7 @@ public class CategoryService(
         {
             Name = request.Name.Trim(),
             Description = request.Description?.Trim(),
+            ImagePath = request.ImagePath,
             IsActive = true
         };
 
@@ -80,9 +83,16 @@ public class CategoryService(
             throw new KeyNotFoundException(CategoryConstants.CategoryNotFound);
         }
 
+        // Delete old image if new image is provided
+        if (!string.IsNullOrEmpty(request.ImagePath) && !string.IsNullOrEmpty(trackedCategory.ImagePath) && trackedCategory.ImagePath != request.ImagePath)
+        {
+            await _fileUploadService.DeleteImageAsync(trackedCategory.ImagePath);
+        }
+
         // Update properties
         trackedCategory.Name = request.Name.Trim();
         trackedCategory.Description = request.Description?.Trim();
+        trackedCategory.ImagePath = request.ImagePath;
 
         await _categoryRepository.UpdateAsync(trackedCategory, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -99,6 +109,13 @@ public class CategoryService(
 
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
+        // Get category to delete image
+        var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
+        if (category == null)
+        {
+            throw new KeyNotFoundException(CategoryConstants.CategoryNotFound);
+        }
+
         var deleted = await _categoryRepository.DeleteAsync(id, cancellationToken);
         if (!deleted)
         {
@@ -106,6 +123,13 @@ public class CategoryService(
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Delete associated image file
+        if (!string.IsNullOrEmpty(category.ImagePath))
+        {
+            await _fileUploadService.DeleteImageAsync(category.ImagePath);
+        }
+
         return true;
     }
 
@@ -116,6 +140,7 @@ public class CategoryService(
             Id = category.Id,
             Name = category.Name,
             Description = category.Description,
+            ImagePath = category.ImagePath,
             CreatedAt = category.CreatedAt,
             UpdatedAt = category.UpdatedAt,
             IsActive = category.IsActive

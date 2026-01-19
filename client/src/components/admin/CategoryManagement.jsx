@@ -69,6 +69,9 @@ const CategoryManagement = () => {
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [removeImage, setRemoveImage] = useState(false);
 
   // React Hook Form setup
   const {
@@ -117,6 +120,9 @@ const CategoryManagement = () => {
   // Handle form open for create
   const handleCreateClick = () => {
     setEditingCategoryId(null);
+    setSelectedImage(null);
+    setImagePreview(null);
+    setRemoveImage(false);
     reset({
       name: '',
       description: '',
@@ -127,6 +133,9 @@ const CategoryManagement = () => {
   // Handle form open for edit
   const handleEditClick = (category) => {
     setEditingCategoryId(category.id);
+    setSelectedImage(null);
+    setImagePreview(category.imagePath ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5176'}/${category.imagePath.startsWith('/') ? category.imagePath.slice(1) : category.imagePath}` : null);
+    setRemoveImage(false);
     reset({
       name: category.name,
       description: category.description || '',
@@ -138,10 +147,35 @@ const CategoryManagement = () => {
   const handleFormCancel = () => {
     setIsFormOpen(false);
     setEditingCategoryId(null);
+    setSelectedImage(null);
+    setImagePreview(null);
+    setRemoveImage(false);
     reset({
       name: '',
       description: '',
     });
+  };
+
+  // Handle image file selection
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      setRemoveImage(false);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle remove image
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setRemoveImage(true);
   };
 
   // Handle form submit
@@ -155,17 +189,23 @@ const CategoryManagement = () => {
         await categoryApi.updateCategory(editingCategoryId, {
           name: data.name,
           description: data.description || null,
+          image: selectedImage,
+          removeImage: removeImage,
         });
       } else {
         // Create new category
         await categoryApi.createCategory({
           name: data.name,
           description: data.description || null,
+          image: selectedImage,
         });
       }
       
       setIsFormOpen(false);
       setEditingCategoryId(null);
+      setSelectedImage(null);
+      setImagePreview(null);
+      setRemoveImage(false);
       reset({
         name: '',
         description: '',
@@ -293,6 +333,56 @@ const CategoryManagement = () => {
                   {errors.description && <FormMessage>{errors.description.message}</FormMessage>}
                 </FormItem>
 
+                <FormItem>
+                  <FormLabel>Category Image</FormLabel>
+                  <FormControl>
+                    <div className="space-y-4">
+                      {imagePreview && (
+                        <div className="relative inline-block">
+                          <img
+                            src={imagePreview}
+                            alt="Category preview"
+                            className="h-32 w-32 object-cover rounded-lg border border-gray-200"
+                          />
+                          {editingCategoryId && !selectedImage && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-0 right-0 -mt-2 -mr-2"
+                              onClick={handleRemoveImage}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="cursor-pointer"
+                        />
+                        {imagePreview && selectedImage && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRemoveImage}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Upload an image for the category (JPG, PNG, GIF, WEBP, max 5MB)
+                  </FormDescription>
+                </FormItem>
+
                 <div className="flex gap-2">
                   <Button type="submit" disabled={isLoading}>
                     <Save className="h-4 w-4 mr-2" />
@@ -327,6 +417,7 @@ const CategoryManagement = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
+                    <TableHead>Image</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
@@ -338,6 +429,29 @@ const CategoryManagement = () => {
                   {categories.map((category) => (
                     <TableRow key={category.id}>
                       <TableCell className="font-medium">{category.id}</TableCell>
+                      <TableCell>
+                        {category.imagePath ? (
+                          <img
+                            src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5176'}/${category.imagePath.startsWith('/') ? category.imagePath.slice(1) : category.imagePath}`}
+                            alt={category.name}
+                            className="h-16 w-16 object-cover rounded-lg border border-gray-200"
+                            onError={(e) => {
+                              console.error('Image failed to load:', {
+                                src: e.target.src,
+                                imagePath: category.imagePath,
+                                apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5176'
+                              });
+                            }}
+                            onLoad={() => {
+                              console.log('Image loaded successfully:', category.imagePath);
+                            }}
+                          />
+                        ) : (
+                          <div className="h-16 w-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-400">
+                            No Image
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-medium">{category.name}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {category.description || '-'}
