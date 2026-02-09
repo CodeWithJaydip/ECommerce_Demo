@@ -31,6 +31,18 @@ public class ProductController(IProductService productService, IFileUploadServic
     }
 
     /// <summary>
+    /// Get paginated catalog with search, filtering, and sorting (public access)
+    /// </summary>
+    [HttpGet("catalog")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<PagedResult<ProductResponse>>>> GetCatalog(
+        [FromQuery] CatalogRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _productService.GetCatalogAsync(request, cancellationToken);
+        return Ok(ApiResponse<PagedResult<ProductResponse>>.SuccessResponse(result, "Catalog retrieved successfully"));
+    }
+
+    /// <summary>
     /// Get product by ID (public access)
     /// </summary>
     [HttpGet("{id}")]

@@ -43,6 +43,36 @@ export const getProducts = async () => {
 };
 
 /**
+ * Get paginated catalog with search, filtering, and sorting (public access)
+ * @param {Object} params - Catalog query parameters
+ * @param {string} [params.search] - Search term for name/description
+ * @param {number} [params.categoryId] - Filter by category ID
+ * @param {number} [params.minPrice] - Minimum price filter
+ * @param {number} [params.maxPrice] - Maximum price filter
+ * @param {boolean} [params.inStock] - Show only in-stock products
+ * @param {string} [params.sortBy] - Sort field: name, price, createdAt
+ * @param {boolean} [params.sortDescending] - Sort direction
+ * @param {number} [params.pageNumber] - Page number (1-based)
+ * @param {number} [params.pageSize] - Items per page
+ * @returns {Promise<Object>} { items: Array, metadata: { totalCount, pageNumber, pageSize, totalPages, hasPrevious, hasNext } }
+ */
+export const getCatalog = async (params = {}) => {
+  const searchParams = new URLSearchParams();
+  if (params.search) searchParams.append('search', params.search);
+  if (params.categoryId) searchParams.append('categoryId', params.categoryId.toString());
+  if (params.minPrice !== undefined && params.minPrice !== null && params.minPrice !== '') searchParams.append('minPrice', params.minPrice.toString());
+  if (params.maxPrice !== undefined && params.maxPrice !== null && params.maxPrice !== '') searchParams.append('maxPrice', params.maxPrice.toString());
+  if (params.inStock !== undefined && params.inStock !== null) searchParams.append('inStock', params.inStock.toString());
+  if (params.sortBy) searchParams.append('sortBy', params.sortBy);
+  if (params.sortDescending !== undefined) searchParams.append('sortDescending', params.sortDescending.toString());
+  if (params.pageNumber) searchParams.append('pageNumber', params.pageNumber.toString());
+  if (params.pageSize) searchParams.append('pageSize', params.pageSize.toString());
+
+  const queryString = searchParams.toString();
+  return await get(`/api/product/catalog${queryString ? `?${queryString}` : ''}`);
+};
+
+/**
  * Get product by ID (public access)
  * @param {number} id - Product ID
  * @returns {Promise<Object>} Product object

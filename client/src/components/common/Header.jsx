@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, Settings, LogOut, FolderTree, Package } from 'lucide-react';
+import { ShoppingBag, User, Settings, LogOut, FolderTree, Package, Search } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { logout } from '../../store/slices/authSlice';
@@ -24,6 +24,14 @@ const Header = () => {
             <span className="text-2xl font-bold text-gray-900">ECommerce</span>
           </Link>
           <div className="flex items-center space-x-4">
+            {/* Catalog Link (visible to all users) */}
+            <Link to="/catalog">
+              <Button variant="ghost" className="hidden sm:inline-flex">
+                <Search className="h-4 w-4 mr-2" />
+                Catalog
+              </Button>
+            </Link>
+
             {isAuthenticated && user ? (
               <>
                 {/* User Management Link (Super Admin only) */}
@@ -35,7 +43,7 @@ const Header = () => {
                     </Button>
                   </Link>
                 )}
-                
+
                 {/* Category Management Link (Super Admin only) */}
                 {isSuperAdmin && (
                   <Link to="/admin/categories">
@@ -45,7 +53,7 @@ const Header = () => {
                     </Button>
                   </Link>
                 )}
-                
+
                 {/* Products Link */}
                 <Link to="/products">
                   <Button variant="ghost" className="hidden sm:inline-flex">

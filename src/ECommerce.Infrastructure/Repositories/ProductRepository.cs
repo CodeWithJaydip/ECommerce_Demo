@@ -112,4 +112,66 @@ public class ProductRepository : IProductRepository
             .AsNoTracking()
             .AnyAsync(p => p.Id == productId && p.SellerId == sellerId && p.IsActive, cancellationToken);
     }
+
+    public async Task<(List<ProductEntity> Items, int TotalCount)> GetCatalogAsync(
+        string? search, int? categoryId, decimal? minPrice, decimal? maxPrice,
+        bool? inStock, string? sortBy, bool sortDescending,
+        int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Products
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Include(p => p.Seller)
+            .Where(p => p.IsActive);
+
+        // Search by name or description
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchTerm = search.Trim().ToLower();
+            query = query.Where(p => p.Name.ToLower().Contains(searchTerm)
+                || (p.Description != null && p.Description.ToLower().Contains(searchTerm)));
+        }
+
+        // Filter by category
+        if (categoryId.HasValue)
+        {
+            query = query.Where(p => p.CategoryId == categoryId.Value);
+        }
+
+        // Filter by price range
+        if (minPrice.HasValue)
+        {
+            query = query.Where(p => p.Price >= minPrice.Value);
+        }
+
+        if (maxPrice.HasValue)
+        {
+            query = query.Where(p => p.Price <= maxPrice.Value);
+        }
+
+        // Filter by stock availability
+        if (inStock == true)
+        {
+            query = query.Where(p => p.Stock > 0);
+        }
+
+        // Get total count before pagination
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        // Apply sorting
+        query = sortBy?.ToLower() switch
+        {
+            "name" => sortDescending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
+            "price" => sortDescending ? query.OrderByDescending(p => p.Price) : query.OrderBy(p => p.Price),
+            _ => sortDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt)
+        };
+
+        // Apply pagination
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
 }

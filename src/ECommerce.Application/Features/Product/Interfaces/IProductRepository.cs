@@ -52,4 +52,12 @@ public interface IProductRepository
     /// Check if product belongs to seller
     /// </summary>
     Task<bool> BelongsToSellerAsync(int productId, int sellerId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get paginated catalog with search, filtering, and sorting
+    /// </summary>
+    Task<(List<ProductEntity> Items, int TotalCount)> GetCatalogAsync(
+        string? search, int? categoryId, decimal? minPrice, decimal? maxPrice,
+        bool? inStock, string? sortBy, bool sortDescending,
+        int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 }

@@ -10,6 +10,7 @@ import UserManagement from './components/admin/UserManagement';
 import CategoryManagement from './components/admin/CategoryManagement';
 import ProductList from './components/products/ProductList';
 import ProductForm from './components/products/ProductForm';
+import Catalog from './components/catalog/Catalog';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
@@ -49,6 +50,10 @@ function App() {
               <CategoryManagement />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/catalog"
+          element={<Catalog />}
         />
         <Route
           path="/products"

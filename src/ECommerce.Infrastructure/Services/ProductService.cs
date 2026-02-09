@@ -1,3 +1,4 @@
+using ECommerce.Application.Common.Models;
 using ECommerce.Application.Features.Auth.Interfaces;
 using ECommerce.Application.Features.Category.Interfaces;
 using ECommerce.Application.Features.Product.DTOs.Requests;
@@ -215,6 +216,17 @@ public class ProductService(
         }
 
         return true;
+    }
+
+    public async Task<PagedResult<ProductResponse>> GetCatalogAsync(CatalogRequest request, CancellationToken cancellationToken = default)
+    {
+        var (items, totalCount) = await _productRepository.GetCatalogAsync(
+            request.Search, request.CategoryId, request.MinPrice, request.MaxPrice,
+            request.InStock, request.SortBy, request.SortDescending,
+            request.PageNumber, request.PageSize, cancellationToken);
+
+        var responses = items.Select(MapToResponse).ToList();
+        return new PagedResult<ProductResponse>(responses, totalCount, request.PageNumber, request.PageSize);
     }
 
     private static ProductResponse MapToResponse(ProductEntity product)

@@ -1,3 +1,4 @@
+using ECommerce.Application.Common.Models;
 using ECommerce.Application.Features.Product.DTOs.Requests;
 using ECommerce.Application.Features.Product.DTOs.Responses;
 
@@ -37,4 +38,9 @@ public interface IProductService
     /// Delete a product (Super Admin or Seller - only their own)
     /// </summary>
     Task<bool> DeleteAsync(int id, int? currentUserId, bool isSuperAdmin, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get paginated catalog with search, filtering, sorting, and pagination
+    /// </summary>
+    Task<PagedResult<ProductResponse>> GetCatalogAsync(CatalogRequest request, CancellationToken cancellationToken = default);
 }
