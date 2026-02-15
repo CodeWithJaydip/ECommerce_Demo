@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, X, Package, DollarSign, Tag, ChevronLeft, ChevronRight, SlidersHorizontal, ShoppingBag } from 'lucide-react';
+import { Search, X, Package, DollarSign, Tag, ChevronLeft, ChevronRight, SlidersHorizontal, ShoppingBag, ShoppingCart, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
@@ -13,10 +13,17 @@ import {
 } from '../ui/select';
 import * as productApi from '../../services/api/productApi';
 import * as categoryApi from '../../services/api/categoryApi';
+import * as basketApi from '../../services/api/basketApi';
+import { useAppDispatch, useAppSelector } from '../../hooks/redux';
+import { fetchBasketCount } from '../../store/slices/basketSlice';
 import Header from '../common/Header';
 
 const Catalog = () => {
+  const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [addingToBasket, setAddingToBasket] = useState({});
+  const [addedToBasket, setAddedToBasket] = useState({});
 
   // Initialize state from URL search params
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -174,6 +181,23 @@ const Catalog = () => {
 
   // Get active filter count
   const activeFilterCount = [debouncedSearch, categoryId, minPrice !== '' ? minPrice : '', maxPrice !== '' ? maxPrice : '', inStock === 'true' ? 'true' : ''].filter(Boolean).length;
+
+  const handleAddToBasket = async (productId) => {
+    if (!isAuthenticated) return;
+    setAddingToBasket(prev => ({ ...prev, [productId]: true }));
+    try {
+      await basketApi.addItem({ productId, quantity: 1 });
+      dispatch(fetchBasketCount());
+      setAddedToBasket(prev => ({ ...prev, [productId]: true }));
+      setTimeout(() => {
+        setAddedToBasket(prev => ({ ...prev, [productId]: false }));
+      }, 2000);
+    } catch (err) {
+      setError(err.message || 'Failed to add item to basket');
+    } finally {
+      setAddingToBasket(prev => ({ ...prev, [productId]: false }));
+    }
+  };
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
@@ -480,6 +504,29 @@ const Catalog = () => {
                           <p className="text-xs text-gray-500 mt-1">by {product.sellerName}</p>
                         )}
                       </div>
+                      {isAuthenticated && product.stock > 0 && (
+                        <Button
+                          size="sm"
+                          variant={addedToBasket[product.id] ? 'outline' : 'default'}
+                          className={addedToBasket[product.id] ? 'bg-green-50 text-green-700 border-green-300' : ''}
+                          onClick={() => handleAddToBasket(product.id)}
+                          disabled={addingToBasket[product.id]}
+                        >
+                          {addedToBasket[product.id] ? (
+                            <>
+                              <Check className="h-4 w-4 mr-1" />
+                              Added
+                            </>
+                          ) : addingToBasket[product.id] ? (
+                            <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                          ) : (
+                            <>
+                              <ShoppingCart className="h-4 w-4 mr-1" />
+                              Add
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

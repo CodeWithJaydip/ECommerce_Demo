@@ -19,6 +19,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserRole> UserRoles { get; set; } = null!;
     public DbSet<Category> Categories { get; set; } = null!;
     public DbSet<Product> Products { get; set; } = null!;
+    public DbSet<Basket> Baskets { get; set; } = null!;
+    public DbSet<BasketItem> BasketItems { get; set; } = null!;
+    public DbSet<ShippingAddress> ShippingAddresses { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

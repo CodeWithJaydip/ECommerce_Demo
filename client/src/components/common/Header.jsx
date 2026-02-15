@@ -1,17 +1,27 @@
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, Settings, LogOut, FolderTree, Package, Search } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, User, Settings, LogOut, FolderTree, Package, Search } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { logout } from '../../store/slices/authSlice';
+import { fetchBasketCount, resetBasket } from '../../store/slices/basketSlice';
 
 const Header = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { itemCount } = useAppSelector((state) => state.basket);
   const isSuperAdmin = user?.roles?.includes('Super Admin');
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchBasketCount());
+    }
+  }, [isAuthenticated, dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(resetBasket());
     navigate('/');
   };
 
@@ -61,7 +71,19 @@ const Header = () => {
                     Products
                   </Button>
                 </Link>
-                
+
+                {/* Basket Link */}
+                <Link to="/basket" className="relative">
+                  <Button variant="ghost" size="icon" className="relative">
+                    <ShoppingCart className="h-5 w-5" />
+                    {itemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary-600 text-white text-xs font-bold">
+                        {itemCount > 99 ? '99+' : itemCount}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+
                 {/* Dashboard Link */}
                 <Link to="/dashboard">
                   <Button variant="ghost" className="hidden sm:inline-flex">
@@ -69,7 +91,7 @@ const Header = () => {
                     Dashboard
                   </Button>
                 </Link>
-                
+
                 {/* User Info & Logout */}
                 <div className="flex items-center space-x-3">
                   <div className="hidden sm:flex flex-col text-right">
@@ -78,8 +100,8 @@ const Header = () => {
                     </span>
                     <span className="text-xs text-gray-500">{user.email}</span>
                   </div>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleLogout}
                     className="hidden sm:inline-flex"
                   >

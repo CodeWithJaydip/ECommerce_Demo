@@ -6,7 +6,9 @@ using Serilog;
 using System.Text;
 using ECommerce.Api.Middleware;
 using ECommerce.Application.Features.Auth.Interfaces;
+using ECommerce.Application.Features.Basket.Interfaces;
 using ECommerce.Application.Features.Category.Interfaces;
+using ECommerce.Application.Features.ShippingAddress.Interfaces;
 using ECommerce.Application.Features.User.Interfaces;
 using ECommerce.Infrastructure.Data;
 using ECommerce.Infrastructure.Repositories;
@@ -52,6 +54,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ECommerce.Application.Features.Product.Interfaces.IProductRepository, ECommerce.Infrastructure.Repositories.ProductRepository>();
+builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+builder.Services.AddScoped<IShippingAddressRepository, ShippingAddressRepository>();
 
 // Register UnitOfWork
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -64,6 +68,8 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ECommerce.Application.Features.Product.Interfaces.IProductService, ECommerce.Infrastructure.Services.ProductService>();
 builder.Services.AddScoped<ECommerce.Infrastructure.Services.IFileUploadService, ECommerce.Infrastructure.Services.FileUploadService>();
+builder.Services.AddScoped<IBasketService, BasketService>();
+builder.Services.AddScoped<IShippingAddressService, ShippingAddressService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");

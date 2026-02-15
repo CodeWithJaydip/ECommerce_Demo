@@ -11,6 +11,8 @@ import CategoryManagement from './components/admin/CategoryManagement';
 import ProductList from './components/products/ProductList';
 import ProductForm from './components/products/ProductForm';
 import Catalog from './components/catalog/Catalog';
+import BasketPage from './components/basket/BasketPage';
+import CheckoutPage from './components/basket/CheckoutPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
@@ -72,6 +74,22 @@ function App() {
           element={
             <ProtectedRoute>
               <ProductForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/basket"
+          element={
+            <ProtectedRoute>
+              <BasketPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutPage />
             </ProtectedRoute>
           }
         />
