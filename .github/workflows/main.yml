@@ -1,0 +1,52 @@
+name: Test Parallel Jobs
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:        # this lets you trigger it manually too
+
+jobs:
+  job1:
+    runs-on: windows-latest
+    steps:
+      - name: Show start time
+        run: echo "JOB 1 STARTED - $(Get-Date -Format 'HH:mm:ss')"
+        shell: powershell
+
+      - name: Simulate some work
+        run: Start-Sleep -Seconds 15
+        shell: powershell
+
+      - name: Show end time
+        run: echo "JOB 1 ENDED - $(Get-Date -Format 'HH:mm:ss')"
+        shell: powershell
+
+  job2:
+    runs-on: windows-latest
+    steps:
+      - name: Show start time
+        run: echo "JOB 2 STARTED - $(Get-Date -Format 'HH:mm:ss')"
+        shell: powershell
+
+      - name: Simulate some work
+        run: Start-Sleep -Seconds 15
+        shell: powershell
+
+      - name: Show end time
+        run: echo "JOB 2 ENDED - $(Get-Date -Format 'HH:mm:ss')"
+        shell: powershell
+
+  job3:
+    runs-on: windows-latest
+    steps:
+      - name: Show start time
+        run: echo "JOB 3 STARTED - $(Get-Date -Format 'HH:mm:ss')"
+        shell: powershell
+
+      - name: Simulate some work
+        run: Start-Sleep -Seconds 15
+        shell: powershell
+
+      - name: Show end time
+        run: echo "JOB 3 ENDED - $(Get-Date -Format 'HH:mm:ss')"
+        shell: powershell
